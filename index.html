@@ -74,27 +74,56 @@ function resetCatchGame(showNote=true){if(catchClock){clearInterval(catchClock);
 function lightCandle(btn){if(btn.classList.contains('lit'))return;btn.classList.add('lit');btn.textContent='🕯️✨';btn.disabled=true;const n=document.querySelectorAll('.candle.lit').length;document.getElementById('score4').textContent=n;document.getElementById('candleStatus').textContent=['A wish for joy is glowing.','A wish for courage is glowing.','A wish for love is glowing.'][n-1];if(n===3){document.getElementById('candleStatus').textContent='Three wishes sent into the universe. May they find you. ✨';document.getElementById('candleNext').disabled=false;unlock(5);spawnConfetti(24)}}
 function unlockVault(){const val=document.getElementById('vaultCode').value.trim();if(val==='10'){document.getElementById('vaultStatus').textContent='Access granted! The memory vault is open, Gulu. 🔓';document.getElementById('score5').textContent='1';document.getElementById('vaultNext').disabled=false;unlock(6);spawnConfetti(22)}else{document.getElementById('vaultStatus').textContent='Hmm, that code did not work. Hint: the demo code is 10.'}}
 const captions=['my favourite smile','a little sunshine','a memory to keep','cutie moments','your magic','that lovely smile','my favourite day','sweet memories','just being you','always adorable'];const grid=document.getElementById('photoGrid');const photoSlots=[];let photoUrls=[];
-grid.appendChild(label);
+
+captions.forEach((cap, i) => {
+  const label = document.createElement('label');
+  label.className = 'photo';
+
+  const placeholder = document.createElement('span');
+  placeholder.className = 'placeholder';
+  placeholder.textContent = '＋ Photo ' + (i + 1);
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.setAttribute('aria-label', 'Choose photo ' + (i + 1));
+
+  const img = document.createElement('img');
+  img.alt = 'Ayantika photo ' + (i + 1);
+  img.style.display = 'none';
+
+  input.onchange = function () {
+    if (this.files && this.files[0]) {
+      showGalleryPhoto(i, this.files[0]);
+    }
+    this.value = '';
+  };
+
+  const tag = document.createElement('span');
+  tag.className = 'tag';
+  tag.textContent = cap;
+
+  label.appendChild(placeholder);
+  label.appendChild(input);
+  label.appendChild(img);
+  label.appendChild(tag);
+  grid.appendChild(label);
 
   photoSlots.push({ label, img, placeholder });
 
   const bundled = new Image();
 
   bundled.onload = () => {
-    showGalleryPhoto(
-      i,
-      './photo' + (i + 1) + '.jpg.jpeg',
-      false
-    );
+    showGalleryPhoto(i, './photo' + (i + 1) + '.jpg.jpeg', false);
   };
 
   bundled.onerror = () => {
-    placeholder.textContent =
-      'Photo ' + (i + 1) + ' not found';
+    placeholder.textContent = 'Photo ' + (i + 1) + ' not found';
   };
 
   bundled.src = './photo' + (i + 1) + '.jpg.jpeg';
 });
+
 const GALLERY_DB='guluBirthdayGallery',GALLERY_STORE='photos',MUSIC_STORE='music';
 function openGalleryDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(GALLERY_DB,2);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(GALLERY_STORE))db.createObjectStore(GALLERY_STORE);if(!db.objectStoreNames.contains(MUSIC_STORE))db.createObjectStore(MUSIC_STORE)};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function saveGalleryPhoto(i,file){try{const db=await openGalleryDB();await new Promise((resolve,reject)=>{const tx=db.transaction(GALLERY_STORE,'readwrite');tx.objectStore(GALLERY_STORE).put(file,i);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}catch(e){console.warn('Could not save photo persistently',e)}}
