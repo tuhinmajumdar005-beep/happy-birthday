@@ -107,7 +107,48 @@ function previewLetter(){const t=document.getElementById('letterText').value.tri
 function finalAnswer(btn,correct){const opts=[...document.querySelectorAll('#finalOptions .riddle-option')];if(correct){opts.forEach(b=>{b.disabled=true;b.classList.remove('wrong')});btn.classList.add('correct');document.getElementById('finalStatus').textContent='The heart key fits. Your final surprise is unlocked!';document.getElementById('finalReveal').style.display='block';document.getElementById('finalLetter').textContent=document.getElementById('letterText').value.trim();spawnConfetti(90)}else{btn.classList.add('wrong');document.getElementById('finalStatus').textContent='Try again, Gulu. Think about what makes a moment meaningful. 💗'}}
 function spawnConfetti(count=45){const colors=['#ff8eb7','#ffd98b','#d8c5ff','#fff','#f6a8ca'];for(let i=0;i<count;i++){const c=document.createElement('i');c.className='confetti';c.style.left=Math.random()*100+'vw';c.style.background=colors[Math.floor(Math.random()*colors.length)];c.style.animationDuration=(3+Math.random()*2)+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),6000)}}
 const ambient=document.getElementById('ambient');for(let i=0;i<35;i++){let e=document.createElement('span');e.className='floaty';e.textContent=['♡','✦','✧','🎀'][Math.floor(Math.random()*4)];e.style.left=Math.random()*100+'%';e.style.top=Math.random()*100+'%';e.style.animationDelay=Math.random()*5+'s';ambient.appendChild(e)}
-const music=document.getElementById('bgMusic'),musicBtn=document.getElementById('musicBtn'),musicFile=document.getElementById('musicFile');let customMusic=false,musicOn=false,activeTrack='',savedMusicUrl='';function defaultTrack(){return current<=3?'audio/birthday.mp3':'audio/romantic.mp3'}function setDefaultMusic(){if(customMusic)return;const next=defaultTrack();if(activeTrack!==next){activeTrack=next;music.src=next;if(musicOn)music.play().catch(()=>musicBtn.textContent='♫ Tap to play')}}async function restoreCustomMusic(){try{const db=await openGalleryDB();const blob=await new Promise((resolve,reject)=>{const tx=db.transaction(MUSIC_STORE,'readonly'),req=tx.objectStore(MUSIC_STORE).get('custom');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});db.close();if(blob){customMusic=true;savedMusicUrl=URL.createObjectURL(blob);music.src=savedMusicUrl;musicBtn.textContent='♫ Music saved · tap to play';document.getElementById('addMusic').textContent='♪ Change music'}}catch(e){console.warn('Could not restore saved music',e)}}document.getElementById('addMusic').onclick=()=>musicFile.click();musicFile.onchange=async()=>{const file=musicFile.files&&musicFile.files[0];if(file){try{const db=await openGalleryDB();await new Promise((resolve,reject)=>{const tx=db.transaction(MUSIC_STORE,'readwrite');tx.objectStore(MUSIC_STORE).put(file,'custom');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close();if(savedMusicUrl)URL.revokeObjectURL(savedMusicUrl);savedMusicUrl=URL.createObjectURL(file);customMusic=true;music.src=savedMusicUrl;activeTrack='';document.getElementById('addMusic').textContent='♪ Change music';music.play().then(()=>{musicOn=true;musicBtn.textContent='♫ Music on'}).catch(()=>musicBtn.textContent='♫ Music saved · tap to play')}catch(e){musicBtn.textContent='♫ Could not save music';console.warn(e)}this.value=''}};musicBtn.onclick=()=>{if(!music.src)setDefaultMusic();if(music.paused)music.play().then(()=>{musicOn=true;musicBtn.textContent='♫ Music on'}).catch(()=>musicBtn.textContent='♫ Tap to play');else{music.pause();musicOn=false;musicBtn.textContent='♫ Music off'}};restoreCustomMusic();
+const music = document.getElementById('bgMusic');
+const musicBtn = document.getElementById('musicBtn');
+const addMusicBtn = document.getElementById('addMusic');
+
+const defaultMusic = './sub_clair-happy-birthday-592177.mp3';
+
+let musicOn = false;
+let activeTrack = '';
+let customMusic = false;
+
+music.src = defaultMusic;
+music.loop = true;
+music.preload = 'auto';
+
+musicBtn.textContent = '♫ Music off';
+
+musicBtn.onclick = async () => {
+  if (music.paused) {
+    try {
+      await music.play();
+      musicOn = true;
+      musicBtn.textContent = '♫ Music on';
+    } catch (error) {
+      musicBtn.textContent = '♫ Tap to play';
+    }
+  } else {
+    music.pause();
+    musicOn = false;
+    musicBtn.textContent = '♫ Music off';
+  }
+};
+
+addMusicBtn.style.display = 'none';
+
+function setDefaultMusic() {
+  // Keep the same birthday song throughout the quest.
+  if (musicOn && music.paused) {
+    music.play().catch(() => {
+      musicBtn.textContent = '♫ Tap to play';
+    });
+  }
+}
 document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'&&current===0)startQuest();if(e.key==='Escape'&&current!==0)go(0)});
 </script>
 </body></html>
